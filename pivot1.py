@@ -20,25 +20,57 @@ def convert_to_num(s):
   except TypeError:
     return s
 
-def parse_lpdict(lpdict_filename):
-  print lpdict_filename
-  lpdict = {}
-  with open(lpdict_filename, 'r') as fh:
-    m,n              = map(convert_to_num, fh.readline().split())
-    basic_indices    = map(convert_to_num, fh.readline().split())
-    nonbasic_indices = map(convert_to_num, fh.readline().split())
-    b_values         = map(convert_to_num, fh.readline().split())
-    A = []
-    for i in range(int(m)):
-      A.append(map(convert_to_num, fh.readline().split()))
-    z_coeffs         = map(convert_to_num, fh.readline().split())
+def line_to_num_list(fh):
+  return map(convert_to_num, fh.readline().split())
 
-    print m, n
-    print basic_indices
-    print nonbasic_indices
-    print b_values
-    print A
-    print z_coeffs
+class lpdict:
+  def __init__(self):
+    self.m                = 0
+    self.n                = 0
+    self.basic_indices    = []
+    self.nonbasic_indices = []
+    self.b_values         = []
+    self.A                = []
+    self.z_coeffs         = []
+
+  def init_from_file(self,lpdict_filename):
+    lpdict = {}
+    with open(lpdict_filename, 'r') as fh:
+      m, n             = line_to_num_list(fh)
+
+      basic_indices    = line_to_num_list(fh)
+      nonbasic_indices = line_to_num_list(fh)
+      assert len(basic_indices)    == m
+      assert len(nonbasic_indices) == n
+
+      b_values         = line_to_num_list(fh)
+      assert len(b_values) == m
+
+      A = []
+      for i in range(int(m)):
+        l = line_to_num_list(fh)
+        assert len(l) == n
+        A.append(l)
+
+      z_coeffs         = line_to_num_list(fh)
+      assert len(z_coeffs) == (n+1)
+
+      # assert that we reached end of file ?
+
+      print m, n
+      print basic_indices
+      print nonbasic_indices
+      print b_values
+      print A
+      print z_coeffs
+
+      self.m                = m               
+      self.n                = n               
+      self.basic_indices    = basic_indices   
+      self.nonbasic_indices = nonbasic_indices
+      self.b_values         = b_values        
+      self.A                = A               
+      self.z_coeffs         = z_coeffs        
 
 def main(argv=None):
   """chutney main function"""
@@ -56,7 +88,8 @@ def main(argv=None):
   except SystemExit :
     return 1
 
-  lpdict = parse_lpdict(args.lpdict)
+  mylpd = lpdict()
+  mylpd.init_from_file(args.lpdict)
 
 if __name__ == "__main__":
   sys.exit(main())
