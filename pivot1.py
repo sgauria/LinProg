@@ -72,6 +72,18 @@ class lpdict:
       self.A                = A               
       self.z_coeffs         = z_coeffs        
 
+  def find_entering_variable(self):
+    entering_index = self.m + self.n + 10 # some large value.
+    for i, zc in enumerate(self.z_coeffs[1:]):
+      index = self.nonbasic_indices[i]
+      if zc >= 0 :
+        if index < entering_index:
+          entering_index = index
+    # TODO : check for final dictionary.
+    return entering_index
+
+
+
 def main(argv=None):
   """chutney main function"""
   print ""
@@ -90,6 +102,7 @@ def main(argv=None):
 
   mylpd = lpdict()
   mylpd.init_from_file(args.lpdict)
+  print mylpd.find_entering_variable()
 
 if __name__ == "__main__":
   sys.exit(main())
