@@ -5,6 +5,8 @@ doc_str = """
 
 import sys, os
 import argparse
+import math
+from numbers import Number
 
 def convert_to_num(s):
   """ convert string to number, if possible. Else leave it as a string. Similar to Perl. """
@@ -32,6 +34,7 @@ class lpdict:
     self.b_values         = []
     self.A                = []
     self.z_coeffs         = []
+    self.large_value      = None
 
   def init_from_file(self,lpdict_filename):
     lpdict = {}
@@ -57,12 +60,12 @@ class lpdict:
 
       # assert that we reached end of file ?
 
-      print m, n
-      print basic_indices
-      print nonbasic_indices
-      print b_values
-      print A
-      print z_coeffs
+      #print m, n
+      #print basic_indices
+      #print nonbasic_indices
+      #print b_values
+      #print A
+      #print z_coeffs
 
       self.m                = m               
       self.n                = n               
@@ -71,22 +74,44 @@ class lpdict:
       self.b_values         = b_values        
       self.A                = A               
       self.z_coeffs         = z_coeffs        
+      self.large_value      = m + n + 10 # some value larger than all variable indices.
 
   def find_entering_variable(self):
-    entering_index = self.m + self.n + 10 # some large value.
+    entering_index = self.large_value
     for i, zc in enumerate(self.z_coeffs[1:]):
       index = self.nonbasic_indices[i]
       if zc >= 0 :
         if index < entering_index:
           entering_index = index
-    # TODO : check for final dictionary.
+    if entering_index == self.large_value:
+      return "FINAL"
     return entering_index
+
+  def find_leaving_variable(self, entering_index):
+    A_col = self.nonbasic_indices.index(entering_index)
+    assert (self.z_coeffs[A_col+1] >= 0)
+    leaving_index = self.large_value
+    best_bound    = None
+    for i in range(self.m):
+      b = self.b_values[i]
+      a = self.A[i][A_col]
+      if a != 0:
+        bound = -1.0 * b / a
+        if bound >= 0 :
+          index = self.basic_indices[i]
+          if best_bound == None or bound < best_bound or bound == best_bound and index < leaving_index:
+            leaving_index = index
+            best_bound = bound
+    if best_bound == None :
+      return ("UNBOUNDED", None)
+    else :
+      z_new = self.z_coeffs[0] + self.z_coeffs[A_col+1] * best_bound
+      return (leaving_index, z_new)
 
 
 
 def main(argv=None):
   """chutney main function"""
-  print ""
 
   if argv is None:
     argv = sys.argv
@@ -102,7 +127,22 @@ def main(argv=None):
 
   mylpd = lpdict()
   mylpd.init_from_file(args.lpdict)
-  print mylpd.find_entering_variable()
+  ev    = mylpd.find_entering_variable()
+  lv,zn = mylpd.find_leaving_variable(ev)
+
+  if not isinstance(ev, Number) :
+    print ev
+  elif not isinstance(lv, Number) :
+    print lv
+  else :
+    print ev
+    print lv
+    if zn != None :
+      if int(zn) == zn:
+        print "%.1f"%(zn)
+      else :
+        print "%.4f"%(zn)
+  
 
 if __name__ == "__main__":
   sys.exit(main())
