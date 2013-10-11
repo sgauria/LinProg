@@ -35,6 +35,15 @@ class lpdict:
     self.A                = []
     self.z_coeffs         = []
     self.large_value      = None
+    self.epsilon          = 1e-8
+
+  def __repr__(self):
+    r = "{m} {n}\n".format(self.m, self.n)
+    # TODO 
+
+  def __str__(self):
+    r = "{m} {n}\n".format(self.m, self.n)
+    # TODO 
 
   def init_from_file(self,lpdict_filename):
     lpdict = {}
@@ -80,7 +89,9 @@ class lpdict:
     entering_index = self.large_value
     for i, zc in enumerate(self.z_coeffs[1:]):
       index = self.nonbasic_indices[i]
-      if zc >= 0 :
+      if 0 < zc <= self.epsilon :
+        print "WARNING: zc for index", index, "is less than epsilon. Ignoring." 
+      if self.epsilon < zc :
         if index < entering_index:
           entering_index = index
     if entering_index == self.large_value:
@@ -95,7 +106,10 @@ class lpdict:
     for i in range(self.m):
       b = self.b_values[i]
       a = self.A[i][A_col]
-      if a != 0:
+      if -self.epsilon < a < self.epsilon:
+        if a != 0 :
+          print "WARNING: coeff for A row", i, "col", A_col, " is less than epsilon. Ignoring."
+      else :
         bound = -1.0 * b / a
         if bound >= 0 :
           index = self.basic_indices[i]
