@@ -25,6 +25,22 @@ def convert_to_num(s):
 def line_to_num_list(fh):
   return map(convert_to_num, fh.readline().split())
 
+def table_to_str(table):
+  str_table = [map(str,x) for x in table]
+  table_ht = len(table)
+  table_wd = len(table[0])
+
+  rowformat = ""
+  for i in range(table_wd):
+    maxlen = max([len(x[i]) for x in str_table])
+    rowformat += "{:>%d} "%(maxlen)
+  rowformat += "\n"
+
+  r = ""
+  for row in str_table:
+    r += rowformat.format(*row)
+  return r
+
 class lpdict:
   def __init__(self):
     self.m                = 0
@@ -48,13 +64,7 @@ class lpdict:
     table.append( ['-']*(self.n+3))
     table.append( ['z'] + ['|'] + self.z_coeffs)
     table.append( ['','','']  + self.nonbasic_indices)
-    str_table = [map(str,x) for x in table]
-    maxlen = max([reduce(max,map(len,x)) for x in str_table])
-    rowformat = "{:>%d} "%(maxlen) * (self.n+3) + "\n"
-    r = ""
-    for row in str_table:
-      r += rowformat.format(*row)
-    return r
+    return table_to_str(table)
 
   def init_from_file(self,lpdict_filename):
     with open(lpdict_filename, 'r') as fh:
@@ -112,7 +122,8 @@ class lpdict:
     A_col = self.nonbasic_indices.index(entering_var)
     assert (self.z_coeffs[A_col+1] >= 0)
     leaving_var = self.large_value
-    best_bound    = None
+    best_bound  = None
+    epsilon     = self.epsilon
     for i in range(self.m):
       b = self.b_values[i]
       a = self.A[i][A_col]
@@ -123,7 +134,7 @@ class lpdict:
         bound = -1.0 * b / a
         if bound >= 0 :
           var = self.basic_indices[i]
-          if best_bound == None or bound < best_bound or bound == best_bound and var < leaving_var:
+          if best_bound == None or bound < (best_bound - epsilon) or bound < (best_bound + epsilon) and var < leaving_var: 
             leaving_var = var
             best_bound = bound
     if best_bound == None :
@@ -176,7 +187,7 @@ class lpdict:
       self.A[i].append(1)
     self.nonbasic_indices.append(0)
     # Change objective.
-    for i in range(self.n):
+    for i in range(self.n+1):
       self.z_coeffs[i] = 0
     self.z_coeffs.append(-1)
     # Record new dictionary size
@@ -225,12 +236,21 @@ def main(argv=None):
     
 
   if args.part == 3 :
+    if args.debug :
+      print mylpd
+
     # Set up aux problem
     mylpd.auxiliarize()
+
+    if args.debug :
+      print mylpd
 
     # Magic pivot
     ev = 0
     lv = mylpd.basic_indices[mylpd.b_values.index(min(mylpd.b_values))] # var with smallest b value.
+    if args.debug :
+      print ev
+      print lv
     mylpd.pivot(ev,lv)
 
   if args.part in [2,3]:

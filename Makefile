@@ -8,7 +8,7 @@ $(PART2_UNIT_CHKS) : %.myout : % pivot.py
 	./pivot.py -part 2 -lpdict $< > $@
 	diff -w $<.output $@ 
 
-PART3_UNIT_CHKS = $(patsubst %.out,%.myout,$(wildcard initializationTests/unitTests/*.out))
+PART3_UNIT_CHKS = $(patsubst %.out,%.myout,$(wildcard initializationTests/unitTests/*.out initializationTests/unitTests/moreTests/*.out))
 $(PART3_UNIT_CHKS) : %.myout : % pivot.py
 	./pivot.py -part 3 -lpdict $< > $@
 	diff -w $<.out $@ 
