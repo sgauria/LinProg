@@ -42,11 +42,18 @@ class lpdict:
   #  # TODO 
 
   def __str__(self):
-    r  = "{m} {n}\n".format(m=self.m, n=self.n)
-    for i in range(self.m) :
-      r += "{vi} | {bi} {Ai}\n".format(vi=self.basic_indices[i], bi=self.b_values[i], Ai=self.A[i])
-    r += "z | {zc}\n".format(zc=self.z_coeffs)
-    r += "       {nbi}\n".format(nbi=self.nonbasic_indices)
+    def my_flatten (l) :
+      return list(l[:-1]) + l[-1]
+    table = map(my_flatten, zip (self.basic_indices, ["|"]* self.m, self.b_values, self.A))
+    table.append( ['-']*(self.n+3))
+    table.append( ['z'] + ['|'] + self.z_coeffs)
+    table.append( ['','','']  + self.nonbasic_indices)
+    str_table = [map(str,x) for x in table]
+    maxlen = max([reduce(max,map(len,x)) for x in str_table])
+    rowformat = "{:>%d} "%(maxlen) * (self.n+3) + "\n"
+    r = ""
+    for row in str_table:
+      r += rowformat.format(*row)
     return r
 
   def init_from_file(self,lpdict_filename):
@@ -112,7 +119,7 @@ class lpdict:
       if -self.epsilon < a < self.epsilon:
         if a != 0 :
           print "WARNING: coeff for A row", i, "col", A_col, " is less than epsilon. Ignoring."
-      else :
+      elif a < 0 :
         bound = -1.0 * b / a
         if bound >= 0 :
           var = self.basic_indices[i]
@@ -177,7 +184,8 @@ def main(argv=None):
   
   input_parser = argparse.ArgumentParser(description=doc_str)
   input_parser.add_argument('-lpdict', default='part1.lpdict', help='lpdictionary file')
-  input_parser.add_argument('-part', default=1, type=int, help='1 or 2')
+  input_parser.add_argument('-part'  , default=1, type=int, help='1 or 2')
+  input_parser.add_argument('-debug')
   try :
     args = input_parser.parse_args(argv[1:])
   except SystemExit :
@@ -207,6 +215,30 @@ def main(argv=None):
           print "%.4f"%(zp)
     
     #print mylpd
+
+  if args.part == 2 :
+    pivot_count = 0
+    while True :
+      if args.debug :
+        print mylpd
+
+      ev = mylpd.find_entering_variable()
+      if args.debug :
+        print ev
+      if not isinstance(ev, Number) : # final
+        print "%.6f"%(mylpd.z_coeffs[0])
+        print pivot_count
+        break
+
+      lv = mylpd.find_leaving_variable(ev)
+      if args.debug :
+        print lv
+      if not isinstance(lv, Number) : # unbounded
+        print lv
+        break
+
+      mylpd.pivot(ev,lv)
+      pivot_count += 1
 
 if __name__ == "__main__":
   sys.exit(main())
