@@ -186,26 +186,27 @@ def main(argv=None):
   mylpd = lpdict()
   mylpd.init_from_file(args.lpdict)
 
-  #print mylpd
+  if args.part == 1 :
+    #print mylpd
 
-  ev = mylpd.find_entering_variable()
-  lv = mylpd.find_leaving_variable(ev)
+    ev = mylpd.find_entering_variable()
+    lv = mylpd.find_leaving_variable(ev)
 
-  if not isinstance(ev, Number) :
-    print ev
-  elif not isinstance(lv, Number) :
-    print lv
-  else :
-    print ev
-    print lv
-    zp = mylpd.pivot(ev, lv)
-    if zp != None :
-      if int(zp) == zp:
-        print "%.1f"%(zp)
-      else :
-        print "%.4f"%(zp)
-  
-  #print mylpd
+    if not isinstance(ev, Number) :
+      print ev
+    elif not isinstance(lv, Number) :
+      print lv
+    else :
+      print ev
+      print lv
+      zp = mylpd.pivot(ev, lv)
+      if zp != None :
+        if int(zp) == zp:
+          print "%.1f"%(zp)
+        else :
+          print "%.4f"%(zp)
+    
+    #print mylpd
 
 if __name__ == "__main__":
   sys.exit(main())
