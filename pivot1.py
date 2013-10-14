@@ -199,7 +199,7 @@ def main(argv=None):
     print lv
     zp = mylpd.pivot(ev, lv)
     if zp != None :
-      if int(zn) == zp:
+      if int(zp) == zp:
         print "%.1f"%(zp)
       else :
         print "%.4f"%(zp)
