@@ -177,6 +177,7 @@ def main(argv=None):
   
   input_parser = argparse.ArgumentParser(description=doc_str)
   input_parser.add_argument('-lpdict', default='part1.lpdict', help='lpdictionary file')
+  input_parser.add_argument('-part', default=1, type=int, help='1 or 2')
   try :
     args = input_parser.parse_args(argv[1:])
   except SystemExit :
