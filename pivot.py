@@ -51,7 +51,7 @@ class lpdict:
     self.A                = []
     self.z_coeffs         = []
     self.large_value      = None
-    self.epsilon          = 1e-8
+    self.epsilon          = 1e-10
 
   #def __repr__(self):
   #  r = "{m} {n}\n".format(self.m, self.n)
@@ -110,7 +110,7 @@ class lpdict:
     for i, zc in enumerate(self.z_coeffs[1:]):
       var = self.nonbasic_indices[i]
       if 0 < zc <= self.epsilon :
-        print "WARNING: zc for var", var, "is less than epsilon. Ignoring." 
+        print >>sys.stderr, "WARNING: zc for var", var, "is less than epsilon. Ignoring." 
       if self.epsilon < zc :
         if var < entering_var:
           entering_var = var
@@ -129,7 +129,7 @@ class lpdict:
       a = self.A[i][A_col]
       if -self.epsilon < a < self.epsilon:
         if a != 0 :
-          print "WARNING: coeff for A row", i, "col", A_col, " is less than epsilon. Ignoring."
+          print >>sys.stderr, "WARNING: coeff for A row", i, "col", A_col, " is less than epsilon. Ignoring."
       elif a < 0 :
         bound = -1.0 * b / a
         if bound >= 0 :
