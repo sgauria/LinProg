@@ -25,7 +25,8 @@ PART3_ASSGNS    = $(patsubst %,%.myout,$(wildcard initializationTests/assignment
 $(PART3_ASSGNS) : %.myout : % pivot.py
 	./pivot.py -part 3 -lpdict $< > $@
 
-.PHONY: part1 part2 part3
+.PHONY: part1 part2 part3 all
 part1 : $(PART1_UNIT_CHKS) $(PART1_ASSGNS)
 part2 : $(PART2_UNIT_CHKS) $(PART2_ASSGNS)
 part3 : $(PART3_UNIT_CHKS) $(PART3_ASSGNS)
+all : part1 part2 part3
