@@ -233,12 +233,11 @@ class lpdict:
   def run_simplex(self):
     while True :
       srv = self.simplex_step()
-      if not isinstance(ev, Number) : # final or unbounded
+      if not isinstance(srv, Number) : # final or unbounded
         if srv == "FINAL":
           return self.z_coeffs[0]
         else :
           return srv
-
 
   def is_feasible (self):
     if (min(self.b_values) < 0):
@@ -251,6 +250,13 @@ class lpdict:
       return True
     else :
       return False
+
+  def variable_values (self):
+    vars = self.basic_indices + self.nonbasic_indices
+    vals = self.b_values + [0]*(self.n)
+    vvs  = zip (vars,vals)
+    vvs.sort()
+    return vvs
 
 
 def main(argv=None):
@@ -335,10 +341,12 @@ def main(argv=None):
       mylpd_aux.auxiliarize()
       mylpd_aux.first_aux_pivot()
       aux_z = mylpd_aux.run_simplex()
-      if final_z != 0 :
+      if aux_z != 0 :
         print "Cannot solve aux problem. Original problem must be infeasible."
         print aux_z
         return
+      else :
+        print "aux step completed"
       mylpd_aux.unauxiliarize()
       mylpd = mylpd_aux
 
@@ -349,6 +357,7 @@ def main(argv=None):
     else :
       print "SOLVED!!!"
       print final_z
+      print mylpd.variable_values()
     return
 
 
