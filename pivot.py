@@ -230,6 +230,16 @@ class lpdict:
     zn = self.pivot(ev,lv)
     return zn    # new objective value.
 
+  def run_simplex(self):
+    while True :
+      srv = self.simplex_step()
+      if not isinstance(ev, Number) : # final or unbounded
+        if srv == "FINAL":
+          return self.z_coeffs[0]
+        else :
+          return srv
+
+
   def is_feasible (self):
     if (min(self.b_values) < 0):
       return False
@@ -253,7 +263,7 @@ def main(argv=None):
   
   input_parser = argparse.ArgumentParser(description=doc_str)
   input_parser.add_argument('-lpdict', default='part1.lpdict', help='lpdictionary file')
-  input_parser.add_argument('-part'  , default=1, type=int, help='1, 2 or 3')
+  input_parser.add_argument('-part'  , default=4, type=int, help='1, 2 or 3')
   input_parser.add_argument('-debug')
   try :
     args = input_parser.parse_args(argv[1:])
@@ -324,6 +334,22 @@ def main(argv=None):
       mylpd_aux = copy.deepcopy(mylpd)
       mylpd_aux.auxiliarize()
       mylpd_aux.first_aux_pivot()
+      aux_z = mylpd_aux.run_simplex()
+      if final_z != 0 :
+        print "Cannot solve aux problem. Original problem must be infeasible."
+        print aux_z
+        return
+      mylpd_aux.unauxiliarize()
+      mylpd = mylpd_aux
+
+    final_z = mylpd.run_simplex()
+    if not isinstance(final_z, Number) :
+      print "Unable to solve."
+      print final_z
+    else :
+      print "SOLVED!!!"
+      print final_z
+    return
 
 
 if __name__ == "__main__":
