@@ -7,6 +7,7 @@ import sys, os
 import argparse
 import math
 from numbers import Number
+import copy
 
 def convert_to_num(s):
   """ convert string to number, if possible. Else leave it as a string. Similar to Perl. """
@@ -42,7 +43,7 @@ def table_to_str(table):
   return r
 
 class lpdict:
-  def __init__(self):
+  def __init__ (self):
     self.m                = 0
     self.n                = 0
     self.basic_indices    = []
@@ -50,14 +51,15 @@ class lpdict:
     self.b_values         = []
     self.A                = []
     self.z_coeffs         = []
+    self.shdw_z_coeffs     = []
     self.large_value      = None
     self.epsilon          = 1e-10
 
-  #def __repr__(self):
+  #def __repr__ (self):
   #  r = "{m} {n}\n".format(self.m, self.n)
   #  # TODO 
 
-  def __str__(self):
+  def __str__ (self):
     def my_flatten (l) :
       return list(l[:-1]) + l[-1]
     table = map(my_flatten, zip (self.basic_indices, ["|"]* self.m, self.b_values, self.A))
@@ -66,7 +68,7 @@ class lpdict:
     table.append( ['','','']  + self.nonbasic_indices)
     return table_to_str(table)
 
-  def init_from_file(self,lpdict_filename):
+  def init_from_file (self,lpdict_filename):
     with open(lpdict_filename, 'r') as fh:
       m, n             = line_to_num_list(fh)
 
@@ -105,7 +107,7 @@ class lpdict:
       self.z_coeffs         = z_coeffs        
       self.large_value      = m + n + 10 # some value larger than all variable indices.
 
-  def find_entering_variable(self):
+  def find_entering_variable (self):
     entering_var = self.large_value
     for i, zc in enumerate(self.z_coeffs[1:]):
       var = self.nonbasic_indices[i]
@@ -118,7 +120,7 @@ class lpdict:
       return "FINAL"
     return entering_var
 
-  def find_leaving_variable(self, entering_var):
+  def find_leaving_variable (self, entering_var):
     A_col = self.nonbasic_indices.index(entering_var)
     assert (self.z_coeffs[A_col+1] >= 0)
     leaving_var = self.large_value
@@ -167,33 +169,78 @@ class lpdict:
           A[j][i] = A[j][i] + ajp * A[p_row][i]
         self.b_values[j] = self.b_values[j] + ajp * self.b_values[p_row]
 
-    # Finally pivot the objective row, similar to the rows above.
-    ajp = self.z_coeffs[p_col+1]
-    self.z_coeffs[p_col+1] = 0
-    for i in range(n):
-      self.z_coeffs[i+1] = self.z_coeffs[i+1] + ajp * A[p_row][i]
-    self.z_coeffs[0] = self.z_coeffs[0] + ajp * self.b_values[p_row]
-
     # And switch the lists of indices.
     self.basic_indices[p_row]    = entering_var
     self.nonbasic_indices[p_col] = leaving_var
 
+    # Finally pivot the objective rows, similar to the rows above.
+    for zrow in self.z_coeffs, self.shdw_z_coeffs:
+      if len(zrow) > 0:
+        ajp = zrow[p_col+1]
+        zrow[p_col+1] = 0
+        for i in range(n):
+          zrow[i+1] = zrow[i+1] + ajp * A[p_row][i]
+        zrow[0] = zrow[0] + ajp * self.b_values[p_row]
 
     return self.z_coeffs[0]
 
-  def auxiliarize(self): # Convert to auxiliary dictionary
+  def auxiliarize (self): # Convert to auxiliary dictionary
     # Add +x0 to every constraint equation
     for i in range(self.m):
       self.A[i].append(1)
     self.nonbasic_indices.append(0)
-    # Change objective.
-    for i in range(self.n+1):
-      self.z_coeffs[i] = 0
-    self.z_coeffs.append(-1)
+    # Modify regular objective to include x0
+    self.z_coeffs.append(0)
+    # Move it to the shadow copy
+    self.shdw_z_coeffs = self.z_coeffs
+    # Set up the aux objective.
+    self.z_coeffs = [0]*(self.n+1) + [-1]
     # Record new dictionary size
     self.n += 1
     self.large_value += 1
 
+  def unauxiliarize (self): # Convert back to regular form.
+    # remove column containing x0
+    c0 = self.nonbasic_indices.index(0)
+    for i in range(self.m):
+      self.A[i] = self.A[i][:c0] + self.A[i][c0+1:]
+    self.z_coeffs = self.z_coeffs[:c0+1] + self.z_coeffs[c0+2:]
+    self.shdw_z_coeffs = self.shdw_z_coeffs[:c0+1] + self.shdw_z_coeffs[c0+2:]
+    # Reduce size
+    self.n -= 1
+    self.large_value -= 1
+    # Move original objective back in place. Forget about aux objective
+    self.z_coeffs = self.shdw_z_coeffs
+    self.shdw_z_coeffs = []
+  
+  def first_aux_pivot (self): # First pivot for aux dictionary
+    ev = 0
+    lv = self.basic_indices[self.b_values.index(min(self.b_values))] # var with smallest b value.
+    self.pivot(ev,lv)
+
+  def simplex_step (self):
+    ev = self.find_entering_variable()
+    if not isinstance(ev, Number) : # final
+      return ev
+
+    lv = self.find_leaving_variable(ev)
+    if not isinstance(lv, Number) : # unbounded
+      return lv
+
+    zn = self.pivot(ev,lv)
+    return zn    # new objective value.
+
+  def is_feasible (self):
+    if (min(self.b_values) < 0):
+      return False
+    else :
+      return True
+
+  def is_degenerate (self):
+    if (min(self.b_values) == 0):
+      return True
+    else :
+      return False
 
 
 def main(argv=None):
@@ -245,13 +292,7 @@ def main(argv=None):
     if args.debug :
       print mylpd
 
-    # Magic pivot
-    ev = 0
-    lv = mylpd.basic_indices[mylpd.b_values.index(min(mylpd.b_values))] # var with smallest b value.
-    if args.debug :
-      print ev
-      print lv
-    mylpd.pivot(ev,lv)
+    mylpd.first_aux_pivot()
 
   if args.part in [2,3]:
     pivot_count = 0
@@ -277,6 +318,13 @@ def main(argv=None):
 
       mylpd.pivot(ev,lv)
       pivot_count += 1
+
+  if args.part == 4: # Full solver.
+    if not mylpd.is_feasible():
+      mylpd_aux = copy.deepcopy(mylpd)
+      mylpd_aux.auxiliarize()
+      mylpd_aux.first_aux_pivot()
+
 
 if __name__ == "__main__":
   sys.exit(main())
