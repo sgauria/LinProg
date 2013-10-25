@@ -1,0 +1,19 @@
+var x1  integer >=0 ;
+var x2  integer >=0 ;
+var x3  integer >=0 ;
+var x4  integer >=0 ;
+var x5  integer >=0 ;
+var x6  integer >=0 ;
+var x7  integer >=0 ;
+var x8  integer >=0 ;
+var x9  integer >=0 ;
+maximize obj: 0.0  -9.0 * x1   + 49.0 * x2   -36.0 * x3   + 41.0 * x4 ;
+c1: x5 = 84.0  + 7.0 * x1  -14.0 * x2  -59.0 * x3  -54.0 * x4 ;
+c2: x6 = 44.0  -71.0 * x1  -32.0 * x2  + 75.0 * x3  + 28.0 * x4 ;
+c3: x7 = 41.0  + 74.0 * x1  + 12.0 * x2  + 63.0 * x3  + 33.0 * x4 ;
+c4: x8 = 24.0  -3.0 * x1  -78.0 * x2  -9.0 * x3  -11.0 * x4 ;
+c5: x9 = 97.0  -56.0 * x1  -32.0 * x2  -32.0 * x3  + 39.0 * x4 ;
+solve; 
+display 0.0  -9.0 * x1   + 49.0 * x2   -36.0 * x3   + 41.0 * x4 ;
+ 
+ end; 
