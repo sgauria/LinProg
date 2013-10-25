@@ -9,6 +9,26 @@ import math
 from numbers import Number
 import copy
 
+# Epsilon comparisons
+# Ignore differences smaller than epsilon.
+# Centralize the code here.
+epsilon = 1e-10
+def eps_cmp_lt(a,b):
+  rv = ( ((a) + epsilon) <  (b) )
+  return rv
+def eps_cmp_gt(a,b):
+  rv = ( ((a) - epsilon) >  (b) )
+  return rv
+def eps_cmp_le(a,b):
+  rv = ( ((a) + epsilon) <= (b) )
+  return rv
+def eps_cmp_ge(a,b):
+  rv = ( ((a) - epsilon) >= (b) )
+  return rv
+def eps_cmp_eq(a,b):
+  rv = ( ((a) - epsilon) < (b) < ((a) + epsilon) )
+  return rv
+
 def convert_to_num(s):
   """ convert string to number, if possible. Else leave it as a string. Similar to Perl. """
   try:
@@ -53,12 +73,13 @@ class lpdict:
     self.z_coeffs         = []
     self.shdw_z_coeffs     = []
     self.large_value      = None
-    self.epsilon          = 1e-10
 
+  # repr is the string form that could be used to recreate the object.
   #def __repr__ (self):
   #  r = "{m} {n}\n".format(self.m, self.n)
   #  # TODO 
 
+  # str is the user-readable string form.
   def __str__ (self):
     def my_flatten (l) :
       return list(l[:-1]) + l[-1]
@@ -111,9 +132,7 @@ class lpdict:
     entering_var = self.large_value
     for i, zc in enumerate(self.z_coeffs[1:]):
       var = self.nonbasic_indices[i]
-      if 0 < zc <= self.epsilon :
-        print >>sys.stderr, "WARNING: zc for var", var, "is less than epsilon. Ignoring." 
-      if self.epsilon < zc :
+      if eps_cmp_gt(zc,0):
         if var < entering_var:
           entering_var = var
     if entering_var == self.large_value:
@@ -125,18 +144,14 @@ class lpdict:
     assert (self.z_coeffs[A_col+1] >= 0)
     leaving_var = self.large_value
     best_bound  = None
-    epsilon     = self.epsilon
     for i in range(self.m):
       b = self.b_values[i]
       a = self.A[i][A_col]
-      if -self.epsilon < a < self.epsilon:
-        if a != 0 :
-          print >>sys.stderr, "WARNING: coeff for A row", i, "col", A_col, " is less than epsilon. Ignoring."
-      elif a < 0 :
+      if eps_cmp_lt(a,0):
         bound = -1.0 * b / a
         if bound >= 0 :
           var = self.basic_indices[i]
-          if best_bound == None or bound < (best_bound - epsilon) or bound < (best_bound + epsilon) and var < leaving_var: 
+          if best_bound == None or eps_cmp_lt(bound, best_bound) or eps_cmp_eq(bound, best_bound) and var < leaving_var: 
             leaving_var = var
             best_bound = bound
     if best_bound == None :
