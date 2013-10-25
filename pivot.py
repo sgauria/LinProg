@@ -298,7 +298,7 @@ def main(argv=None):
   
   input_parser = argparse.ArgumentParser(description=doc_str)
   input_parser.add_argument('-lpdict', default='part1.lpdict', help='lpdictionary file')
-  input_parser.add_argument('-part'  , default=4, type=int, help='1, 2 or 3')
+  input_parser.add_argument('-part'  , default=123, type=int, help='1, 2, 3, 123, 4')
   input_parser.add_argument('-debug')
   try :
     args = input_parser.parse_args(argv[1:])
@@ -308,6 +308,7 @@ def main(argv=None):
   mylpd = lpdict()
   mylpd.init_from_file(args.lpdict)
 
+  # part 1 : Just do one pivot.
   if args.part == 1 :
     ev = mylpd.find_entering_variable()
     lv = mylpd.find_leaving_variable(ev)
@@ -327,6 +328,8 @@ def main(argv=None):
           print "%.4f"%(zp)
     
 
+  # Part 2 : solve LP where the initial state is feasible.
+  # Part 3 : solve initialization phase simplex.
   if args.part == 3 :
     if args.debug :
       print mylpd
@@ -364,7 +367,8 @@ def main(argv=None):
       mylpd.pivot(ev,lv)
       pivot_count += 1
 
-  if args.part == 4: # Full solver.
+  # Part 123 (my own) : Put parts 1,2,3, together and clean up everything to create a full solver.
+  if args.part == 123: # Full solver.
     final_z = mylpd.solve_lp()
     if not isinstance(final_z, Number) :
       print "Unable to solve."
