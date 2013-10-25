@@ -231,6 +231,7 @@ class lpdict:
     return zn    # new objective value.
 
   def run_simplex(self):
+    """ Pivot till we reach a final dictionary or hit a problem"""
     while True :
       srv = self.simplex_step()
       if not isinstance(srv, Number) : # final or unbounded
@@ -238,6 +239,19 @@ class lpdict:
           return self.z_coeffs[0]
         else :
           return srv
+
+  def solve_lp (self):
+    """ Full LP solver, including handling of initialization if needed"""
+    if not self.is_feasible():
+      self.auxiliarize()
+      self.first_aux_pivot()
+      aux_z = self.run_simplex()
+      if aux_z != 0 :
+        return "INFEASIBLE"
+      self.unauxiliarize()
+
+    final_z = self.run_simplex()
+    return final_z
 
   def is_feasible (self):
     if (min(self.b_values) < 0):
@@ -336,21 +350,7 @@ def main(argv=None):
       pivot_count += 1
 
   if args.part == 4: # Full solver.
-    if not mylpd.is_feasible():
-      mylpd_aux = copy.deepcopy(mylpd)
-      mylpd_aux.auxiliarize()
-      mylpd_aux.first_aux_pivot()
-      aux_z = mylpd_aux.run_simplex()
-      if aux_z != 0 :
-        print "Cannot solve aux problem. Original problem must be infeasible."
-        print aux_z
-        return
-      else :
-        print "aux step completed"
-      mylpd_aux.unauxiliarize()
-      mylpd = mylpd_aux
-
-    final_z = mylpd.run_simplex()
+    final_z = mylpd.solve_lp()
     if not isinstance(final_z, Number) :
       print "Unable to solve."
       print final_z
