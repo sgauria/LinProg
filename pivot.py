@@ -16,18 +16,18 @@ epsilon = 1e-10
 def eps_cmp_lt(a,b):
   rv = ( ((a) + epsilon) <  (b) )
   return rv
-def eps_cmp_gt(a,b):
-  rv = ( ((a) - epsilon) >  (b) )
-  return rv
 def eps_cmp_le(a,b):
   rv = ( ((a) + epsilon) <= (b) )
-  return rv
-def eps_cmp_ge(a,b):
-  rv = ( ((a) - epsilon) >= (b) )
   return rv
 def eps_cmp_eq(a,b):
   rv = ( ((a) - epsilon) < (b) < ((a) + epsilon) )
   return rv
+def eps_cmp_gt(a,b):
+  return eps_cmp_lt(b,a) # a > b => b < a
+def eps_cmp_ge(a,b):
+  return eps_cmp_le(b,a) # a >= b => b <= a
+def eps_cmp_ne(a,b):
+  return not eps_cmp_eq(a,b)
 
 def convert_to_num(s):
   """ convert string to number, if possible. Else leave it as a string. Similar to Perl. """
@@ -261,7 +261,7 @@ class lpdict:
       self.auxiliarize()
       self.first_aux_pivot()
       aux_z = self.run_simplex()
-      if aux_z != 0 :
+      if eps_cmp_ne (aux_z, 0):
         return "INFEASIBLE"
       self.unauxiliarize()
 
@@ -269,7 +269,7 @@ class lpdict:
     return final_z
 
   def is_feasible (self):
-    if (min(self.b_values) < 0):
+    if eps_cmp_lt ( min(self.b_values), 0) :
       return False
     else :
       return True
