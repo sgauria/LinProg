@@ -228,6 +228,7 @@ class lpdict:
       self.A[i] = self.A[i][:c0] + self.A[i][c0+1:]
     self.z_coeffs = self.z_coeffs[:c0+1] + self.z_coeffs[c0+2:]
     self.shdw_z_coeffs = self.shdw_z_coeffs[:c0+1] + self.shdw_z_coeffs[c0+2:]
+    self.nonbasic_indices.remove(0)
     # Reduce size
     self.n -= 1
     self.large_value -= 1
@@ -255,6 +256,7 @@ class lpdict:
   def run_simplex(self):
     """ Pivot till we reach a final dictionary or hit a problem"""
     while True :
+      #print self
       srv = self.simplex_step()
       if not isinstance(srv, Number) : # final or unbounded
         if srv == "FINAL":
@@ -319,6 +321,7 @@ class lpdict:
     self.b_values.append(new_b_val)
     self.A.append(new_A_row)
     self.m += 1
+    self.large_value += 1
 
   def add_all_ilp_cuts (self):
     m = self.m
