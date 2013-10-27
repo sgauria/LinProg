@@ -29,6 +29,13 @@ def eps_cmp_ge(a,b):
 def eps_cmp_ne(a,b):
   return not eps_cmp_eq(a,b)
 
+def is_integer(n):
+  return eps_cmp_eq(n, int(n))
+
+def frac(n):
+  """ positive fractional part of n """
+  return (n - math.floor(n))
+
 def convert_to_num(s):
   """ convert string to number, if possible. Else leave it as a string. Similar to Perl. """
   try:
@@ -287,6 +294,52 @@ class lpdict:
     vvs.sort()
     return vvs
 
+  def is_integral (self):
+    """ Is the current dictionary integral in all variable values. """
+    for b in self.b_values:
+      if not is_integer(b):
+        return False
+    return True
+
+  def add_ilp_cut (self, k, use_z):
+    """ k is the row based on which we need to add a cut """
+
+    new_var_num = self.m + self.n + 1
+    if use_z:
+      assert not is_integer(self.z_coeffs[0])
+      new_b_val     = -frac(self.z_coeffs[0])
+      new_A_row     = [frac(-aki) for aki in self.z_coeffs[1:]]
+    else :
+      assert k < self.m
+      assert not is_integer(self.b_values[k])
+      new_b_val     = -frac(self.b_values[k])
+      new_A_row     = [frac(-aki) for aki in self.A[k]]
+
+    self.basic_indices.append(new_var_num)
+    self.b_values.append(new_b_val)
+    self.A.append(new_A_row)
+    self.m += 1
+
+  def add_all_ilp_cuts (self):
+    m = self.m
+    for i in range(m):
+      if not is_integer(self.b_values[i]):
+        self.add_ilp_cut(i, False)
+    if not is_integer(self.z_coeffs[0]):
+      self.add_ilp_cut(0, True)
+
+  def solve_ilp (self):
+    while True :
+      #print self
+      lps = self.solve_lp()
+      if not isinstance(lps, Number) :
+        return lps.lower()
+      if self.is_integral():
+        return self.z_coeffs[0]
+      self.add_all_ilp_cuts()
+
+
+
 
 def main(argv=None):
   """chutney main function"""
@@ -379,6 +432,9 @@ def main(argv=None):
       print mylpd.variable_values()
     return
 
+  if args.part == 4: # Full ILP solver.
+    final_z = mylpd.solve_ilp()
+    print final_z
 
 if __name__ == "__main__":
   sys.exit(main())
