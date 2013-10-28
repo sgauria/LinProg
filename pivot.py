@@ -11,6 +11,7 @@ import copy
 import fractions
 
 # Using fractions is so clean, but it is also 5-6 times slower. Hence we have an option to control its usage.
+# If we are using fractions, we don't need epsilon comparisons, so we we modify those functions as well below.
 use_fractions = False
 
 one = fractions.Fraction(1.0) if use_fractions else 1.0
@@ -20,13 +21,19 @@ one = fractions.Fraction(1.0) if use_fractions else 1.0
 # Centralize the code here.
 epsilon = fractions.Fraction(1e-10) if use_fractions else 1e-10
 def eps_cmp_lt(a,b):
-  rv = ( ((a) + epsilon) <  (b) )
-  return rv
-def eps_cmp_le(a,b):
-  rv = ( ((a) - epsilon) <= (b) )
+  if use_fractions :
+    rv = ( (a) <  (b) )
+  else :
+    rv = ( ((a) + epsilon) <  (b) )
   return rv
 def eps_cmp_eq(a,b):
-  rv = ( ((a) - epsilon) < (b) < ((a) + epsilon) )
+  if use_fractions :
+    rv = ( (a) <= (b) )
+  else :
+    rv = ( ((a) - epsilon) <= (b) < ((a) + epsilon) )
+  return rv
+def eps_cmp_le(a,b):
+  rv = eps_cmp_lt(a,b) or eps_cmp_eq(a,b)
   return rv
 def eps_cmp_gt(a,b):
   return eps_cmp_lt(b,a) # a > b => b < a
@@ -36,9 +43,10 @@ def eps_cmp_ne(a,b):
   return not eps_cmp_eq(a,b)
 
 def is_integer(n):
-  rv = eps_cmp_eq(n, round(n))
-  #if abs(n) < epsilon:
-  #  print n, int(n), rv
+  if use_fractions :
+    rv = ( (n) == round(n) )
+  else :
+    rv = eps_cmp_eq(n, round(n))
   return rv
 
 def frac(n):
