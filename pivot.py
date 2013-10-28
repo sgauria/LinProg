@@ -10,8 +10,9 @@ from numbers import Number
 import copy
 import fractions
 
-# Using fractions is so clean, but it is also 5-6 times slower. Hence we have an option to control its usage.
-# If we are using fractions, we don't need epsilon comparisons, so we we modify those functions as well below.
+# Using fractions is so clean, but it is also 5x - 10x slower. Hence we have an option to control its usage.
+# If we are using fractions, we don't need epsilon comparisons, since everything is precise.
+# So we we modify those functions as well below.
 use_fractions = False
 
 one = fractions.Fraction(1.0) if use_fractions else 1.0
@@ -101,7 +102,7 @@ def neg_transpose (A) :
   new_A = [[ -A[row][col] for row in range(0,ht) ] for col in range(0,wd) ]
   return new_A
 
-# 2 way of doing ILP. Dual is only a bit faster. Mostly significant only for large problems.
+# 2 ways of doing ILP. Using dual is 1x - 2x faster. Significant speedup only for large problems.
 use_dual_for_ilp = True
 
 class lpdict:
