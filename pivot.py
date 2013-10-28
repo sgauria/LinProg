@@ -17,7 +17,7 @@ def eps_cmp_lt(a,b):
   rv = ( ((a) + epsilon) <  (b) )
   return rv
 def eps_cmp_le(a,b):
-  rv = ( ((a) + epsilon) <= (b) )
+  rv = ( ((a) - epsilon) <= (b) )
   return rv
 def eps_cmp_eq(a,b):
   rv = ( ((a) - epsilon) < (b) < ((a) + epsilon) )
@@ -161,7 +161,7 @@ class lpdict:
       a = self.A[i][A_col]
       if eps_cmp_lt(a,0):
         bound = -1.0 * b / a
-        if bound >= 0 :
+        if eps_cmp_ge(bound,0):
           var = self.basic_indices[i]
           if best_bound == None or eps_cmp_lt(bound, best_bound) or eps_cmp_eq(bound, best_bound) and var < leaving_var: 
             leaving_var = var
