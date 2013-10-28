@@ -242,7 +242,7 @@ class lpdict:
     self.shdw_z_coeffs = [0]*(self.n+1)
   
   def first_aux_pivot (self): # First pivot for aux dictionary
-    print self
+    #print self
     ev = 0
     lv = self.basic_indices[self.b_values.index(min(self.b_values))] # var with smallest b value.
     self.pivot(ev,lv)
@@ -262,7 +262,7 @@ class lpdict:
   def run_simplex(self):
     """ Pivot till we reach a final dictionary or hit a problem"""
     while True :
-      print self
+      #print self
       srv = self.simplex_step()
       if not isinstance(srv, Number) : # final or unbounded
         if srv == "FINAL":
@@ -304,13 +304,13 @@ class lpdict:
 
   def is_integral (self):
     """ Is the current dictionary integral in all variable values. """
-    print self
+    #print self
     for b in self.b_values:
       if not is_integer(b):
-        print b, int(b)
-        print "is_integral = False"
+        #print b, int(b)
+        #print "is_integral = False"
         return False
-    print "is_integral = True"
+    #print "is_integral = True"
     return True
 
   def add_ilp_cut (self, k, use_z):
@@ -338,15 +338,16 @@ class lpdict:
     for i in range(m):
       if not is_integer(self.b_values[i]):
         self.add_ilp_cut(i, False)
-    if not is_integer(self.z_coeffs[0]):
-      self.add_ilp_cut(0, True)
+    # TODO : Not sure why adding z-cuts generates wrong results.
+    #if not is_integer(self.z_coeffs[0]):
+    #  self.add_ilp_cut(0, True)
 
   def solve_ilp (self):
-    print self
+    #print self
     while True :
-      print self
+      #print self
       lps = self.solve_lp()
-      print self
+      #print self
       if not isinstance(lps, Number) :
         return lps.lower()
       if self.is_integral():
