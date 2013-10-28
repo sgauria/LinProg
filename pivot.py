@@ -8,11 +8,17 @@ import argparse
 import math
 from numbers import Number
 import copy
+import fractions
+
+# Using fractions is so clean, but it is also 5-6 times slower. Hence we have an option to control its usage.
+use_fractions = False
+
+one = fractions.Fraction(1.0) if use_fractions else 1.0
 
 # epsilon comparisons
 # Ignore differences smaller than epsilon.
 # Centralize the code here.
-epsilon = 1e-10
+epsilon = fractions.Fraction(1e-10) if use_fractions else 1e-10
 def eps_cmp_lt(a,b):
   rv = ( ((a) + epsilon) <  (b) )
   return rv
@@ -37,7 +43,10 @@ def is_integer(n):
 
 def frac(n):
   """ positive fractional part of n """
-  return (n - math.floor(n))
+  if use_fractions :
+    return (n - fractions.Fraction(math.floor(n)))
+  else :
+    return (n - math.floor(n))
 
 def convert_to_num(s):
   """ convert string to number, if possible. Else leave it as a string. Similar to Perl. """
@@ -45,6 +54,12 @@ def convert_to_num(s):
     i = int(s, 0)
     return i
   except ValueError:
+    if use_fractions:
+      try:
+        fr = fractions.Fraction(s)
+        return fr
+      except ValueError:
+        pass
     try:
       f = float(s)
       return f 
@@ -160,7 +175,7 @@ class lpdict:
       b = self.b_values[i]
       a = self.A[i][A_col]
       if eps_cmp_lt(a,0):
-        bound = -1.0 * b / a
+        bound = -one * b / a
         if eps_cmp_ge(bound,0):
           var = self.basic_indices[i]
           if best_bound == None or eps_cmp_lt(bound, best_bound) or eps_cmp_eq(bound, best_bound) and var < leaving_var: 
@@ -184,8 +199,8 @@ class lpdict:
     aij = - A[p_row][p_col]
     A[p_row][p_col] = -1
     for i in range(n):
-      A[p_row][i] = 1.0 * A[p_row][i] / aij
-    self.b_values[p_row] = 1.0 * self.b_values[p_row] / aij
+      A[p_row][i] = one * A[p_row][i] / aij
+    self.b_values[p_row] = one * self.b_values[p_row] / aij
 
     # Now pivot the rest of the rows
     for j in range(m):
@@ -450,7 +465,10 @@ def main(argv=None):
 
   if args.part == 4: # Full ILP solver.
     final_z = mylpd.solve_ilp()
-    print final_z
+    if not isinstance(final_z, Number) :
+      print final_z
+    else :
+      print "%.1f"%(final_z)
 
 if __name__ == "__main__":
   sys.exit(main())
