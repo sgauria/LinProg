@@ -87,6 +87,15 @@ def table_to_str(table):
     r += rowformat.format(*row)
   return r
 
+def neg_transpose (A) :
+  ht = len(A)
+  wd = len(A[0])
+  new_A = [[ -A[row][col] for row in range(0,ht) ] for col in range(0,wd) ]
+  return new_A
+
+# 2 way of doing ILP. Dual is only a bit faster. Mostly significant only for large problems.
+use_dual_for_ilp = True
+
 class lpdict:
   def __init__ (self):
     self.m                = 0
@@ -256,8 +265,23 @@ class lpdict:
     self.z_coeffs = self.shdw_z_coeffs
     self.shdw_z_coeffs = [0]*(self.n+1)
   
+  def dualize (self):
+    new_A = neg_transpose(self.A)
+    new_b = [-x for x in self.z_coeffs[1:]]
+    new_z = [-self.z_coeffs[0]] + [-x for x in self.b_values]
+
+    self.m, self.n = self.n, self.m
+    self.nonbasic_indices, self.basic_indices = self.basic_indices, self.nonbasic_indices
+    self.b_values         = new_b
+    self.A                = new_A
+    self.z_coeffs         = new_z
+    self.shdw_z_coeffs    = [0]*(self.n+1)
+    # NOTE : dualize is discarding the shdw_z_coeffs, so can't be done in the middle of any auxiliary work.
+
+  def undualize (self):
+    self.dualize() # dual of dual is primal.
+  
   def first_aux_pivot (self): # First pivot for aux dictionary
-    #print self
     ev = 0
     lv = self.basic_indices[self.b_values.index(min(self.b_values))] # var with smallest b value.
     self.pivot(ev,lv)
@@ -277,7 +301,6 @@ class lpdict:
   def run_simplex(self):
     """ Pivot till we reach a final dictionary or hit a problem"""
     while True :
-      #print self
       srv = self.simplex_step()
       if not isinstance(srv, Number) : # final or unbounded
         if srv == "FINAL":
@@ -285,7 +308,7 @@ class lpdict:
         else :
           return srv
 
-  def solve_lp (self):
+  def solve_lp (self, is_primal=True):
     """ Full LP solver, including handling of initialization if needed"""
     if not self.is_feasible():
       self.auxiliarize()
@@ -296,6 +319,11 @@ class lpdict:
       self.unauxiliarize()
 
     final_z = self.run_simplex()
+    if not is_primal and not isinstance(final_z, Number) : # final or unbounded
+      if final_z == "INFEASIBLE" :
+        final_z = "UNBOUNDED"
+      if final_z == "UNBOUNDED" :
+        final_z = "INFEASIBLE"
     return final_z
 
   def is_feasible (self):
@@ -319,13 +347,9 @@ class lpdict:
 
   def is_integral (self):
     """ Is the current dictionary integral in all variable values. """
-    #print self
     for b in self.b_values:
       if not is_integer(b):
-        #print b, int(b)
-        #print "is_integral = False"
         return False
-    #print "is_integral = True"
     return True
 
   def add_ilp_cut (self, k, use_z):
@@ -359,16 +383,25 @@ class lpdict:
     #  self.add_ilp_cut(0, True)
 
   def solve_ilp (self):
-    #print self
-    while True :
-      #print self
+    if use_dual_for_ilp :
       lps = self.solve_lp()
-      #print self
-      if not isinstance(lps, Number) :
-        return lps.lower()
-      if self.is_integral():
-        return self.z_coeffs[0]
-      self.add_all_ilp_cuts()
+      while True:
+        if not isinstance(lps, Number) :
+          return lps.lower()
+        if self.is_integral():
+          return self.z_coeffs[0]
+        self.add_all_ilp_cuts()
+        self.dualize()
+        lps = self.solve_lp(is_primal=False)
+        self.undualize()
+    else :
+      while True :
+        lps = self.solve_lp()
+        if not isinstance(lps, Number) :
+          return lps.lower()
+        if self.is_integral():
+          return self.z_coeffs[0]
+        self.add_all_ilp_cuts()
 
 
 
