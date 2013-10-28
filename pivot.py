@@ -353,7 +353,8 @@ class lpdict:
     for i in range(m):
       if not is_integer(self.b_values[i]):
         self.add_ilp_cut(i, False)
-    # TODO : Not sure why adding z-cuts generates wrong results.
+    # TODO : Not sure why adding z-cuts generates wrong results, but it creates issues both with(ilpTest10) and without Fractions(assignment part5)
+    # Update : not all objective functions are integral, so adding z-cuts is not necessarily legal.
     #if not is_integer(self.z_coeffs[0]):
     #  self.add_ilp_cut(0, True)
 
