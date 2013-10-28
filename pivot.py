@@ -9,7 +9,7 @@ import math
 from numbers import Number
 import copy
 
-# Epsilon comparisons
+# epsilon comparisons
 # Ignore differences smaller than epsilon.
 # Centralize the code here.
 epsilon = 1e-10
@@ -30,7 +30,10 @@ def eps_cmp_ne(a,b):
   return not eps_cmp_eq(a,b)
 
 def is_integer(n):
-  return eps_cmp_eq(n, int(n))
+  rv = eps_cmp_eq(n, round(n))
+  #if abs(n) < epsilon:
+  #  print n, int(n), rv
+  return rv
 
 def frac(n):
   """ positive fractional part of n """
@@ -93,6 +96,7 @@ class lpdict:
     table = map(my_flatten, zip (self.basic_indices, ["|"]* self.m, self.b_values, self.A))
     table.append( ['-']*(self.n+3))
     table.append( ['z'] + ['|'] + self.z_coeffs)
+    table.append( ['s'] + ['|'] + self.shdw_z_coeffs)
     table.append( ['','','']  + self.nonbasic_indices)
     return table_to_str(table)
 
@@ -133,6 +137,7 @@ class lpdict:
       self.b_values         = b_values        
       self.A                = A               
       self.z_coeffs         = z_coeffs        
+      self.shdw_z_coeffs    = [0]*(self.n+1)
       self.large_value      = m + n + 10 # some value larger than all variable indices.
 
   def find_entering_variable (self):
@@ -226,7 +231,7 @@ class lpdict:
     c0 = self.nonbasic_indices.index(0)
     for i in range(self.m):
       self.A[i] = self.A[i][:c0] + self.A[i][c0+1:]
-    self.z_coeffs = self.z_coeffs[:c0+1] + self.z_coeffs[c0+2:]
+    self.z_coeffs      = self.z_coeffs[:c0+1]      + self.z_coeffs[c0+2:]
     self.shdw_z_coeffs = self.shdw_z_coeffs[:c0+1] + self.shdw_z_coeffs[c0+2:]
     self.nonbasic_indices.remove(0)
     # Reduce size
@@ -234,9 +239,10 @@ class lpdict:
     self.large_value -= 1
     # Move original objective back in place. Forget about aux objective
     self.z_coeffs = self.shdw_z_coeffs
-    self.shdw_z_coeffs = []
+    self.shdw_z_coeffs = [0]*(self.n+1)
   
   def first_aux_pivot (self): # First pivot for aux dictionary
+    print self
     ev = 0
     lv = self.basic_indices[self.b_values.index(min(self.b_values))] # var with smallest b value.
     self.pivot(ev,lv)
@@ -256,7 +262,7 @@ class lpdict:
   def run_simplex(self):
     """ Pivot till we reach a final dictionary or hit a problem"""
     while True :
-      #print self
+      print self
       srv = self.simplex_step()
       if not isinstance(srv, Number) : # final or unbounded
         if srv == "FINAL":
@@ -298,9 +304,13 @@ class lpdict:
 
   def is_integral (self):
     """ Is the current dictionary integral in all variable values. """
+    print self
     for b in self.b_values:
       if not is_integer(b):
+        print b, int(b)
+        print "is_integral = False"
         return False
+    print "is_integral = True"
     return True
 
   def add_ilp_cut (self, k, use_z):
@@ -332,9 +342,11 @@ class lpdict:
       self.add_ilp_cut(0, True)
 
   def solve_ilp (self):
+    print self
     while True :
-      #print self
+      print self
       lps = self.solve_lp()
+      print self
       if not isinstance(lps, Number) :
         return lps.lower()
       if self.is_integral():
