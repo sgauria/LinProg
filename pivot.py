@@ -15,6 +15,15 @@ import fractions
 # So we we modify those functions as well below.
 use_fractions = False
 
+# 2 ways of doing ILP. Using dual is 1x - 2x faster. Significant speedup only for large problems.
+use_dual_for_ilp = True
+
+# Many different ways of picking entering variables. 
+# The rules other than blands_rule are not fully debugged.
+e_selector = "blands_rule"
+#e_selector = "largest_coeff"
+#e_selector = "largest_step"
+
 one = fractions.Fraction(1.0) if use_fractions else 1.0
 
 # epsilon comparisons
@@ -102,9 +111,6 @@ def neg_transpose (A) :
   new_A = [[ -A[row][col] for row in range(0,ht) ] for col in range(0,wd) ]
   return new_A
 
-# 2 ways of doing ILP. Using dual is 1x - 2x faster. Significant speedup only for large problems.
-use_dual_for_ilp = True
-
 class lpdict:
   def __init__ (self):
     self.m                = 0
@@ -175,16 +181,30 @@ class lpdict:
 
   def find_entering_variable (self):
     entering_var = self.large_value
+    metric       = -1
     for i, zc in enumerate(self.z_coeffs[1:]):
       var = self.nonbasic_indices[i]
       if eps_cmp_gt(zc,0):
-        if var < entering_var:
-          entering_var = var
+        if e_selector == "largest_coeff":
+          if zc > metric:
+            entering_var = var
+            metric       = zc
+        elif e_selector == "largest_step":
+          lv,bound = self.find_leaving_variable(var, True)
+          if not isinstance(lv, Number) :
+            return lv
+          zchange = zc * bound
+          if zchange > metric :
+            entering_var = var
+            metric       = zchange
+        else: # elif e_selector == "blands_rule":
+          if var < entering_var:
+            entering_var = var
     if entering_var == self.large_value:
       return "FINAL"
     return entering_var
 
-  def find_leaving_variable (self, entering_var):
+  def find_leaving_variable (self, entering_var, return_bound=False):
     A_col = self.nonbasic_indices.index(entering_var)
     assert (self.z_coeffs[A_col+1] >= 0)
     leaving_var = self.large_value
@@ -200,10 +220,13 @@ class lpdict:
             leaving_var = var
             best_bound = bound
     if best_bound == None :
-      return "UNBOUNDED"
+      rv = "UNBOUNDED"
     else :
-      #z_new = self.z_coeffs[0] + self.z_coeffs[A_col+1] * best_bound
-      return leaving_var
+      rv = leaving_var
+    if return_bound :
+      return (rv, best_bound)
+    else :
+      return rv
 
   def pivot (self, entering_var, leaving_var):
     p_col = self.nonbasic_indices.index(entering_var)
@@ -310,8 +333,10 @@ class lpdict:
   def run_simplex(self):
     """ Pivot till we reach a final dictionary or hit a problem"""
     while True :
+      #print self
       srv = self.simplex_step()
       if not isinstance(srv, Number) : # final or unbounded
+        #print self
         if srv == "FINAL":
           return self.z_coeffs[0]
         else :
@@ -386,14 +411,16 @@ class lpdict:
     for i in range(m):
       if not is_integer(self.b_values[i]):
         self.add_ilp_cut(i, False)
-    # TODO : Not sure why adding z-cuts generates wrong results, but it creates issues both with(ilpTest10) and without Fractions(assignment part5)
+    # Not sure why adding z-cuts generates wrong results, but it creates issues both with(ilpTest10) and without Fractions(assignment part5)
     # Update : not all objective functions are integral, so adding z-cuts is not necessarily legal.
     #if not is_integer(self.z_coeffs[0]):
     #  self.add_ilp_cut(0, True)
 
   def solve_ilp (self):
+    #print self
     if use_dual_for_ilp :
       lps = self.solve_lp()
+      #print self
       while True:
         if not isinstance(lps, Number) :
           return lps.lower()
