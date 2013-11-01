@@ -1,37 +1,39 @@
+SRCS = pivot.py lpdict.py
+
 PART1_UNIT_CHKS = $(patsubst %.output,%.myout,$(wildcard part1TestCases/unitTests/*.output))
-$(PART1_UNIT_CHKS) : %.myout : % pivot.py
+$(PART1_UNIT_CHKS) : %.myout : % $(SRCS)
 	./pivot.py -part 1 -lpdict $< > $@
 	diff -w $<.output $@ 
 
 PART2_UNIT_CHKS = $(patsubst %.output,%.myout,$(wildcard part2TestCases/unitTests/*.output))
-$(PART2_UNIT_CHKS) : %.myout : % pivot.py
+$(PART2_UNIT_CHKS) : %.myout : % $(SRCS)
 	./pivot.py -part 2 -lpdict $< > $@
 	diff -w $<.output $@ 
 
 PART3_UNIT_CHKS = $(patsubst %.out,%.myout,$(wildcard initializationTests/unitTests/*.out initializationTests/unitTests/moreTests/*.out))
-$(PART3_UNIT_CHKS) : %.myout : % pivot.py
+$(PART3_UNIT_CHKS) : %.myout : % $(SRCS)
 	./pivot.py -part 3 -lpdict $< > $@
 	diff -w $<.out $@ 
 
 PART4_UNIT_CHKS = $(patsubst %.output,%.myout,$(wildcard ilpTests/unitTests/*.output))
-$(PART4_UNIT_CHKS) : %.myout : % pivot.py
+$(PART4_UNIT_CHKS) : %.myout : % $(SRCS)
 	./pivot.py -part 4 -lpdict $< > $@
 	diff -w $<.output $@ 
 
 PART1_ASSGNS    = $(patsubst %,%.myout,$(wildcard part1TestCases/assignmentParts/*.dict))
-$(PART1_ASSGNS) : %.myout : % pivot.py
+$(PART1_ASSGNS) : %.myout : % $(SRCS)
 	./pivot.py -part 1 -lpdict $< > $@
 
 PART2_ASSGNS    = $(patsubst %,%.myout,$(wildcard part2TestCases/assignmentParts/*.dict))
-$(PART2_ASSGNS) : %.myout : % pivot.py
+$(PART2_ASSGNS) : %.myout : % $(SRCS)
 	./pivot.py -part 2 -lpdict $< > $@
 
 PART3_ASSGNS    = $(patsubst %,%.myout,$(wildcard initializationTests/assignmentTests/*.dict))
-$(PART3_ASSGNS) : %.myout : % pivot.py
+$(PART3_ASSGNS) : %.myout : % $(SRCS)
 	./pivot.py -part 3 -lpdict $< > $@
 
 PART4_ASSGNS    = $(patsubst %,%.myout,$(wildcard ilpTests/assignmentTests/*.dict))
-$(PART4_ASSGNS) : %.myout : % pivot.py
+$(PART4_ASSGNS) : %.myout : % $(SRCS)
 	./pivot.py -part 4 -lpdict $< > $@
 
 .PHONY: part1 part2 part3 part4 all

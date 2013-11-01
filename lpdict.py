@@ -93,6 +93,11 @@ def table_to_str(table):
   str_table = [map(str,x) for x in table]
   table_ht = len(table)
   table_wd = len(table[0])
+  for i in range(1,table_ht):
+    if len(table[i]) != table_wd:
+      print table
+      print "row", i, "has a different length from row0"
+      assert(0)
 
   rowformat = ""
   for i in range(table_wd):
