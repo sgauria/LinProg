@@ -78,12 +78,12 @@ class sudoku :
         elif sffmt == 2:
           assert 0, "Characters left over while using sffmt = 2"
 
-  def create_AB (self):
-    """ Create the A and B matrices that represent the constraints with Ax = b"
+  def create_Ab (self):
+    """ Create the A and b matrices that represent the constraints with Ax = b"
         x is defined using N variables for each position, 
         i.e. each variable is xij_eq_k and can only take values 0 and 1.
     """
-    A  = [] ; B  = []
+    A  = [] ; b  = []
     N   = self.N   ; NN  = self.NN  ; 
     NNN = self.NNN ; sN  = self.sN  ; 
 
@@ -92,47 +92,44 @@ class sudoku :
     for i in range(NN):
       A_row = [0]*(i*N) + [1]*N + [0]*((NN-i-1)*N)
       A.append(A_row)
-      B.append(1)
+      b.append(1)
 
     # NOTE : val in the following 4 loops is 0-based, not 1-based.
 
     # Rule 2 : Each row can have only one of each value.
     for row in range(N):
       for val in range(N):
+        A_row = [0]*NNN
         for i in range(NNN):
           irow = i // NN
           if irow == row and i % N == val:
             A_row[i] = 1
-          else :
-            A_row[i] = 0
         A.append(A_row)
-        B.append(1)
+        b.append(1)
 
     # Rule 3 : Each col can have only one of each value.
     for col in range(N):
       for val in range(N):
+        A_row = [0]*NNN
         for i in range(NNN):
           icol = (i % NN) // N
           if icol == col and i % N == val:
             A_row[i] = 1
-          else :
-            A_row[i] = 0
         A.append(A_row)
-        B.append(1)
+        b.append(1)
 
     # Rule 4 : Each square can have only one of each value.
     for sq in range(N):
       for val in range(N):
+        A_row = [0]*NNN
         for i in range(NNN):
           irow = i // NN
           icol = (i % NN) // N
           isq  = (irow // sN) * sN + (icol // sN)
           if isq == sq and i % N == val:
             A_row[i] = 1
-          else :
-            A_row[i] = 0
         A.append(A_row)
-        B.append(1)
+        b.append(1)
 
     # Rule 5 : The specified values must be respected.
     for row in range(N):
@@ -142,16 +139,49 @@ class sudoku :
           for val in range(N):
             pos = row*NN + col*N + val
             A_row = [0]*(pos) + [1] + [0]*(NNN - pos - 1)
-            B_val = 1 if (sval == val+1) else 0
+            b_val = 1 if (sval == val+1) else 0
             A.append(A_row)
-            B.append(B_val)
+            b.append(b_val)
 
     self.A = A
-    self.B = B
+    self.b = b
 
-    #AB = zip(A,B)
-    #for x in AB:
+    #Ab = zip(A,b)
+    #for x in Ab:
     #  print x
+
+  def init_lpdict (self, lpd):
+    """ 
+    Our constraints are Ax = b, but our ILP solver only handles <= constraints.
+    So we convert Ax = b into Ax <= b ; -Ax <= -b .
+    And hence our dictionary will look like
+     b -A
+    -b  A
+    """
+    NNN = self.NNN
+
+    m = 2*len(self.A) # number of constraints.
+    n = NNN           # number of variables.
+    print m,n
+
+    nonbasic_indices = range(    1, NNN+1)   # decision variables
+    basic_indices    = range(NNN+1, NNN+1+m) # slack variables
+
+    def minus(x): return -x
+
+    b        = self.b
+    minus_b  = map(minus, b)
+    b_values = b + minus_b
+    print b_values
+
+    A        = self.A
+    minus_A  = [map(minus,row) for row in A]
+    A_values = minus_A + A
+    print A_values
+
+    z_coeffs = [1]*(NNN+1)
+
+    lpd.init_fn(m, n, basic_indices, nonbasic_indices, b_values, A_values, z_coeffs)
 
 
 
@@ -176,7 +206,12 @@ def main(argv=None):
   mysudoku = sudoku(args.sN)
   mysudoku.init_from_file(args.sfile, args.sffmt)
   print mysudoku
-  mysudoku.create_AB()
+  mysudoku.create_Ab()
+
+  mylpd = lpdict()
+  mysudoku.init_lpdict(mylpd)
+
+  print mylpd
 
 if __name__ == "__main__":
   sys.exit(main())

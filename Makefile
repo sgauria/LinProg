@@ -1,3 +1,5 @@
+all : part1 part2 part3 part4
+
 SRCS = pivot.py lpdict.py
 
 PART1_UNIT_CHKS = $(patsubst %.output,%.myout,$(wildcard part1TestCases/unitTests/*.output))
@@ -41,4 +43,3 @@ part1 : $(PART1_UNIT_CHKS) $(PART1_ASSGNS)
 part2 : $(PART2_UNIT_CHKS) $(PART2_ASSGNS)
 part3 : $(PART3_UNIT_CHKS) $(PART3_ASSGNS)
 part4 : $(PART4_UNIT_CHKS) $(PART4_ASSGNS)
-all : part1 part2 part3 part4

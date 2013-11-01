@@ -174,6 +174,9 @@ class lpdict:
       #print A
       #print z_coeffs
 
+      self.init_fn (m,n,basic_indices,nonbasic_indices,b_values,A, z_coeffs)
+
+  def init_fn (self,m,n,basic_indices,nonbasic_indices,b_values,A, z_coeffs):
       self.m                = m               
       self.n                = n               
       self.basic_indices    = basic_indices   
