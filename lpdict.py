@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+doc_str = """
+ This file implements a lpdict class which has a dictionary structure for representing linear programs.
+ And associated functions for actually pivoting from dictionary to dictionary and finding 
+ LP and ILP solutions.
+"""
+
 import math
 from   numbers import Number
 import fractions

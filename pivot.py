@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 doc_str = """
+ File for solving the linear programming course assignments using the lpdict class.
 """
 
 import sys, os
