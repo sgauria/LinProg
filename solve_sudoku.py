@@ -8,7 +8,6 @@ import sys, os
 import argparse
 from   numbers import Number
 from   lpdict import lpdict, convert_to_num, table_to_str, line_to_num_list
-import pprint
 
 class sudoku :
   def __init__ (self, sN):
@@ -162,7 +161,7 @@ class sudoku :
 
     m = 2*len(self.A) # number of constraints.
     n = NNN           # number of variables.
-    print m,n
+    #print m,n
 
     nonbasic_indices = range(    1, NNN+1)   # decision variables
     basic_indices    = range(NNN+1, NNN+1+m) # slack variables
@@ -172,17 +171,36 @@ class sudoku :
     b        = self.b
     minus_b  = map(minus, b)
     b_values = b + minus_b
-    print b_values
+    #print b_values
 
     A        = self.A
     minus_A  = [map(minus,row) for row in A]
     A_values = minus_A + A
-    print A_values
+    #print A_values
 
-    z_coeffs = [1]*(NNN+1)
+    # Set up an objective that will get us out of the initial state.
+    z_coeffs = [0] + [1]*(NNN)
 
     lpd.init_fn(m, n, basic_indices, nonbasic_indices, b_values, A_values, z_coeffs)
 
+  def lpsoln_to_sudoku_format (self, lpd):
+    sarray = self.sarray
+    N      = self.N  
+    NN     = self.NN 
+    NNN    = self.NNN
+
+    self.old_sarray = sarray # save off input.
+    vvs = lpd.variable_values()
+    for var , val in vvs:
+      if var <= NNN and val == 1:
+        i = var - 1
+        irow = i // NN
+        icol = (i % NN) // N
+        ival = (i % N) + 1
+        if sarray[irow][icol] == 0:
+          sarray[irow][icol] = ival
+        else : 
+          assert (sarray[irow][icol] == ival)
 
 
 def main(argv=None):
@@ -205,13 +223,21 @@ def main(argv=None):
 
   mysudoku = sudoku(args.sN)
   mysudoku.init_from_file(args.sfile, args.sffmt)
-  print mysudoku
-  mysudoku.create_Ab()
+  if args.debug :
+    print "Input sudoku"
+    print mysudoku
 
+  mysudoku.create_Ab()
   mylpd = lpdict()
   mysudoku.init_lpdict(mylpd)
 
-  print mylpd
+  fz = mylpd.solve_ilp()
+  assert (fz == mysudoku.NN)
+
+  mysudoku.lpsoln_to_sudoku_format(mylpd)
+
+  print mysudoku
+
 
 if __name__ == "__main__":
   sys.exit(main())
