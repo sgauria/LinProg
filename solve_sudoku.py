@@ -44,8 +44,41 @@ class sudoku :
 
     return table_to_str(table)
 
+  def init_from_file (self,sfile,sffmt):
+    N = self.N
+    # First fmt is just a list of numbers, one line per row, whitespace separators.
+    if sffmt == None or sffmt == 1:
+      sep = None
+      with open(sfile, 'r') as fh:
+        for i in range(N):
+          line = line_to_num_list(fh, sep)
+          line = [x if 1 <= x <= N else 0 for x in line]
+          self.sarray[i] = line
+        s = fh.readline() # Try to read past end.
+        if s == "":
+          return
+        elif sffmt == 1:
+          assert 0, "Characters left over while using sffmt = 1"
+
+    # second fmt is the output we print being read back in.
+    if sffmt == None or sffmt == 2:
+      sep = '|'
+      with open(sfile, 'r') as fh:
+        for i in range(N):
+          fh.readline() # discard h-line.
+          line = line_to_num_list(fh, sep)
+          line = line[1:-1]
+          line = [x if 1 <= x <= N else 0 for x in line]
+          self.sarray[i] = line
+        fh.readline() # discard h-line.
+        s = fh.readline() # Try to read past end.
+        if s == "":
+          return
+        elif sffmt == 2:
+          assert 0, "Characters left over while using sffmt = 2"
+
 def main(argv=None):
-  """chutney main function"""
+  """main function"""
 
   if argv is None:
     argv = sys.argv
@@ -55,7 +88,7 @@ def main(argv=None):
   input_parser = argparse.ArgumentParser(description=doc_str)
   input_parser.add_argument('-sN', default=2, type=int, help='sudoku size param. 2 = 4x4 sudoku, 3 = 9x9 sudoku.')
   input_parser.add_argument('-sfile', help='file specifying the sudoku array.')
-  input_parser.add_argument('-sffmt', help='specify the fmt of the sfile')
+  input_parser.add_argument('-sffmt', default=None, type=int, help='specify the fmt of the sfile')
   input_parser.add_argument('-debug')
   try :
     args = input_parser.parse_args(argv[1:])
@@ -63,6 +96,7 @@ def main(argv=None):
     return 1
 
   mysudoku = sudoku(args.sN)
+  mysudoku.init_from_file(args.sfile, args.sffmt)
   print mysudoku
 
 if __name__ == "__main__":

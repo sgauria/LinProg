@@ -86,8 +86,8 @@ def convert_to_num(s):
   except TypeError:
     return s
 
-def line_to_num_list(fh):
-  return map(convert_to_num, fh.readline().split())
+def line_to_num_list(fh, sep=None):
+  return map(convert_to_num, fh.readline().split(sep))
 
 def table_to_str(table):
   str_table = [map(str,x) for x in table]

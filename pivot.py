@@ -10,7 +10,7 @@ from   numbers import Number
 from   lpdict import lpdict
 
 def main(argv=None):
-  """chutney main function"""
+  """main function"""
 
   if argv is None:
     argv = sys.argv
