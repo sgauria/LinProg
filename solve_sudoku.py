@@ -157,6 +157,8 @@ class sudoku :
      b -A
     -b  A
     """
+    self.create_Ab()
+
     NNN = self.NNN
 
     m = 2*len(self.A) # number of constraints.
@@ -227,9 +229,11 @@ def main(argv=None):
     print "Input sudoku"
     print mysudoku
 
-  mysudoku.create_Ab()
   mylpd = lpdict()
   mysudoku.init_lpdict(mylpd)
+  if args.debug :
+    print "Start lp"
+    print mylpd
 
   fz = mylpd.solve_ilp()
   assert (fz == mysudoku.NN)

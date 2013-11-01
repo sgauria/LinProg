@@ -1,6 +1,6 @@
-all : part1 part2 part3 part4
+all : part1 part2 part3 part4 sudoku
 
-SRCS = pivot.py lpdict.py
+SRCS = pivot.py lpdict.py solve_sudoku.py
 
 PART1_UNIT_CHKS = $(patsubst %.output,%.myout,$(wildcard part1TestCases/unitTests/*.output))
 $(PART1_UNIT_CHKS) : %.myout : % $(SRCS)
@@ -22,6 +22,11 @@ $(PART4_UNIT_CHKS) : %.myout : % $(SRCS)
 	./pivot.py -part 4 -lpdict $< > $@
 	diff -w $<.output $@ 
 
+SUDOKU_UNIT_CHKS = $(patsubst %.output,%.myout,$(wildcard sudoku/*.output))
+$(SUDOKU_UNIT_CHKS) : %.myout : % $(SRCS)
+	./solve_sudoku.py -sfile $< > $@
+	diff -w $<.output $@ 
+
 PART1_ASSGNS    = $(patsubst %,%.myout,$(wildcard part1TestCases/assignmentParts/*.dict))
 $(PART1_ASSGNS) : %.myout : % $(SRCS)
 	./pivot.py -part 1 -lpdict $< > $@
@@ -38,8 +43,10 @@ PART4_ASSGNS    = $(patsubst %,%.myout,$(wildcard ilpTests/assignmentTests/*.dic
 $(PART4_ASSGNS) : %.myout : % $(SRCS)
 	./pivot.py -part 4 -lpdict $< > $@
 
-.PHONY: part1 part2 part3 part4 all
+
+.PHONY: part1 part2 part3 part4 sudoku all
 part1 : $(PART1_UNIT_CHKS) $(PART1_ASSGNS)
 part2 : $(PART2_UNIT_CHKS) $(PART2_ASSGNS)
 part3 : $(PART3_UNIT_CHKS) $(PART3_ASSGNS)
 part4 : $(PART4_UNIT_CHKS) $(PART4_ASSGNS)
+sudoku : $(SUDOKU_UNIT_CHKS)

@@ -425,11 +425,10 @@ class lpdict:
     #  self.add_ilp_cut(0, True)
 
   def solve_ilp (self):
-    #print self
     if use_dual_for_ilp :
       lps = self.solve_lp()
-      #print self
       while True:
+        #print self.z_coeffs[0]
         if not isinstance(lps, Number) :
           return lps.lower()
         if self.is_integral():
