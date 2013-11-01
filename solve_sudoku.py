@@ -8,6 +8,7 @@ import sys, os
 import argparse
 from   numbers import Number
 from   lpdict import lpdict, convert_to_num, table_to_str, line_to_num_list
+import pprint
 
 class sudoku :
   def __init__ (self, sN):
@@ -77,6 +78,83 @@ class sudoku :
         elif sffmt == 2:
           assert 0, "Characters left over while using sffmt = 2"
 
+  def create_AB (self):
+    """ Create the A and B matrices that represent the constraints with Ax = b"
+        x is defined using N variables for each position, 
+        i.e. each variable is xij_eq_k and can only take values 0 and 1.
+    """
+    A  = [] ; B  = []
+    N   = self.N   ; NN  = self.NN  ; 
+    NNN = self.NNN ; sN  = self.sN  ; 
+
+    # Rule 1 : Each position can have only one value.
+    # So, summation over k xij_eq_k = 1
+    for i in range(NN):
+      A_row = [0]*(i*N) + [1]*N + [0]*((NN-i-1)*N)
+      A.append(A_row)
+      B.append(1)
+
+    # NOTE : val in the following 4 loops is 0-based, not 1-based.
+
+    # Rule 2 : Each row can have only one of each value.
+    for row in range(N):
+      for val in range(N):
+        for i in range(NNN):
+          irow = i // NN
+          if irow == row and i % N == val:
+            A_row[i] = 1
+          else :
+            A_row[i] = 0
+        A.append(A_row)
+        B.append(1)
+
+    # Rule 3 : Each col can have only one of each value.
+    for col in range(N):
+      for val in range(N):
+        for i in range(NNN):
+          icol = (i % NN) // N
+          if icol == col and i % N == val:
+            A_row[i] = 1
+          else :
+            A_row[i] = 0
+        A.append(A_row)
+        B.append(1)
+
+    # Rule 4 : Each square can have only one of each value.
+    for sq in range(N):
+      for val in range(N):
+        for i in range(NNN):
+          irow = i // NN
+          icol = (i % NN) // N
+          isq  = (irow // sN) * sN + (icol // sN)
+          if isq == sq and i % N == val:
+            A_row[i] = 1
+          else :
+            A_row[i] = 0
+        A.append(A_row)
+        B.append(1)
+
+    # Rule 5 : The specified values must be respected.
+    for row in range(N):
+      for col in range(N):
+        sval = self.sarray[row][col]
+        if sval != 0 :
+          for val in range(N):
+            pos = row*NN + col*N + val
+            A_row = [0]*(pos) + [1] + [0]*(NNN - pos - 1)
+            B_val = 1 if (sval == val+1) else 0
+            A.append(A_row)
+            B.append(B_val)
+
+    self.A = A
+    self.B = B
+
+    #AB = zip(A,B)
+    #for x in AB:
+    #  print x
+
+
+
 def main(argv=None):
   """main function"""
 
@@ -98,6 +176,7 @@ def main(argv=None):
   mysudoku = sudoku(args.sN)
   mysudoku.init_from_file(args.sfile, args.sffmt)
   print mysudoku
+  mysudoku.create_AB()
 
 if __name__ == "__main__":
   sys.exit(main())
