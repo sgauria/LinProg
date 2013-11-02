@@ -247,18 +247,20 @@ class lpdict:
     # First pivot the row with the leaving_var
     aij = - A[p_row][p_col]
     A[p_row][p_col] = -1
-    for i in range(n):
-      A[p_row][i] = one * A[p_row][i] / aij
-    self.b_values[p_row] = one * self.b_values[p_row] / aij
+    if aij != 1 : # eps_cmp_ne (aij, 1):
+      for i in range(n):
+        A[p_row][i] = one * A[p_row][i] / aij
+      self.b_values[p_row] = one * self.b_values[p_row] / aij
 
     # Now pivot the rest of the rows
     for j in range(m):
       if j != p_row :
         ajp = A[j][p_col]
         A[j][p_col] = 0
-        for i in range(n):
-          A[j][i] = A[j][i] + ajp * A[p_row][i]
-        self.b_values[j] = self.b_values[j] + ajp * self.b_values[p_row]
+        if ajp != 0 : # eps_cmp_ne (ajp, 0):
+          for i in range(n):
+            A[j][i] = A[j][i] + ajp * A[p_row][i]
+          self.b_values[j] = self.b_values[j] + ajp * self.b_values[p_row]
 
     # And switch the lists of indices.
     self.basic_indices[p_row]    = entering_var
@@ -269,9 +271,10 @@ class lpdict:
       if len(zrow) > 0:
         ajp = zrow[p_col+1]
         zrow[p_col+1] = 0
-        for i in range(n):
-          zrow[i+1] = zrow[i+1] + ajp * A[p_row][i]
-        zrow[0] = zrow[0] + ajp * self.b_values[p_row]
+        if ajp != 0 : # eps_cmp_ne (ajp, 0):
+          for i in range(n):
+            zrow[i+1] = zrow[i+1] + ajp * A[p_row][i]
+          zrow[0] = zrow[0] + ajp * self.b_values[p_row]
 
     return self.z_coeffs[0]
 

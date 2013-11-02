@@ -180,8 +180,8 @@ class sudoku :
     A_values = minus_A + A
     #print A_values
 
-    # Set up an objective that will get us out of the initial state.
-    z_coeffs = [0] + [1]*(NNN)
+    # Set up some objective - doesn't really matter.
+    z_coeffs = [1] + [0]*(NNN)
 
     lpd.init_fn(m, n, basic_indices, nonbasic_indices, b_values, A_values, z_coeffs)
 
@@ -236,7 +236,7 @@ def main(argv=None):
     print mylpd
 
   fz = mylpd.solve_ilp()
-  assert (fz == mysudoku.NN)
+  #assert (fz == mysudoku.NN)
 
   mysudoku.lpsoln_to_sudoku_format(mylpd)
 
