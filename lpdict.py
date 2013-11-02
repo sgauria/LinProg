@@ -24,6 +24,9 @@ e_selector = "blands_rule"
 #e_selector = "largest_coeff"
 #e_selector = "largest_step"
 
+l_selector = "blands_rule"
+#l_selector = "opp_blands_rule"
+
 one = fractions.Fraction(1.0) if use_fractions else 1.0
 
 # epsilon comparisons
@@ -224,9 +227,14 @@ class lpdict:
         bound = -one * b / a
         if eps_cmp_ge(bound,0):
           var = self.basic_indices[i]
-          if best_bound == None or eps_cmp_lt(bound, best_bound) or eps_cmp_eq(bound, best_bound) and var < leaving_var: 
-            leaving_var = var
-            best_bound = bound
+          if l_selector == "opp_blands_rule":
+            if best_bound == None or eps_cmp_lt(bound, best_bound) or eps_cmp_eq(bound, best_bound) and (var == 0 or var > leaving_var and leaving_var != 0): 
+              leaving_var = var
+              best_bound = bound
+          else :
+            if best_bound == None or eps_cmp_lt(bound, best_bound) or eps_cmp_eq(bound, best_bound) and var < leaving_var: 
+              leaving_var = var
+              best_bound = bound
     if best_bound == None :
       rv = "UNBOUNDED"
     else :
@@ -339,6 +347,7 @@ class lpdict:
       return lv
 
     zn = self.pivot(ev,lv)
+    #print ev, lv
     return zn    # new objective value.
 
   def run_simplex(self):
