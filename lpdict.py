@@ -347,7 +347,7 @@ class lpdict:
       return lv
 
     zn = self.pivot(ev,lv)
-    #print ev, lv
+    #print ev, "enters", lv, "leaves"
     return zn    # new objective value.
 
   def run_simplex(self):
