@@ -352,9 +352,13 @@ class lpdict:
 
   def run_simplex(self):
     """ Pivot till we reach a final dictionary or hit a problem"""
+    count = 0
     while True :
       #print self
       srv = self.simplex_step()
+      count += 1
+      #if count % 10 == 0:
+      #  print self.z_coeffs[0]
       if not isinstance(srv, Number) : # final or unbounded
         #print self
         if srv == "FINAL":

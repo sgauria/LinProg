@@ -10,7 +10,7 @@ from   numbers import Number
 from   lpdict import lpdict, convert_to_num, table_to_str, line_to_num_list
 
 class sudoku :
-  def __init__ (self, sN):
+  def __init__ (self, sN=2):
     self.sN  = sN
     N = sN * sN
     self.N   = N
@@ -180,7 +180,7 @@ class sudoku :
     A_values = minus_A + A
     #print A_values
 
-    # Set up some objective - doesn't really matter.
+    # Set up some objective - doesn't really matter, since it will be replaced by the feasibility objective -x0
     z_coeffs = [1] + [0]*(NNN)
 
     lpd.init_fn(m, n, basic_indices, nonbasic_indices, b_values, A_values, z_coeffs)
